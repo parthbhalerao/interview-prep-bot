@@ -15,3 +15,6 @@ training/datasets/
 
 # Ignore sensitive configuration files
 config.yaml
+
+# Ignore the MacOS filesystem
+.DS_Store
