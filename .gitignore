@@ -1,0 +1,17 @@
+# Ignore Python virtual environments
+venv/
+.env
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+
+# Ignore log files and temporary files
+*.log
+*.tmp
+
+# Ignore datasets (for training models, large files)
+training/datasets/
+
+# Ignore sensitive configuration files
+config.yaml
