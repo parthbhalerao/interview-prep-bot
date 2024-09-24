@@ -1,4 +1,4 @@
-Flask
+flask
 streamlit
 pytest
 langchain
@@ -8,3 +8,5 @@ beautifulsoup4
 lxml
 html5lib
 python-dotenv
+twilio
+sqlite3

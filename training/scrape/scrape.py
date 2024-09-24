@@ -1,20 +1,30 @@
+import os
+from dotenv import load_dotenv
 from selenium.webdriver import Remote, ChromeOptions  
 from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnection  
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
-# Credentials - the zone name and password
-USER : str = 'brd-customer-hl_982709ac-zone-empowering_education'
-PASS : str = 'xv0c1qvqt14s'
-AUTH = USER + ':' + PASS
+SBR_WEBDRIVER = 'https://brd-customer-hl_982709ac-zone-empowering_education:xv0c1qvqt14s@brd.superproxy.io:9515'
 
-SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'  
+# Credentials - SBR_WEBDRIVER
+def get_SBR_WEBDRIVER():
+    # TODO: Add a logging function
+    load_dotenv()
+    SBR_WEBDRIVER : str = os.getenv('SBR_WEBDRIVER')
+    return SBR_WEBDRIVER
+
+# Function to create a session
+def create_session(SBR_WEBDRIVER):
+    # TODO: Add a logging function
+    sbr_connection = ChromiumRemoteConnection(SBR_WEBDRIVER, 'goog', 'chrome')
+    return sbr_connection
 
 # Scrape Website Function #
 def scrape_website(website):
     print('Launching Chrome Browser...')
-
-    sbr_connection = ChromiumRemoteConnection(SBR_WEBDRIVER, 'goog', 'chrome')  
+    # SBR_WEBDRIVER = get_SBR_WEBDRIVER()
+    sbr_connection = create_session(SBR_WEBDRIVER) 
     with Remote(sbr_connection, options=ChromeOptions()) as driver:  
         print('Connected! Navigating...')  
         driver.get(website)
@@ -59,3 +69,7 @@ def split_body_content(content, max_length=6000):
     return [
         content[i : i + max_length] for i in range(0, len(content), max_length)
     ]
+
+# Testing the scrape_website() function
+website = 'https://techwithtim.com'
+html = scrape_website(website)
