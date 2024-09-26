@@ -20,9 +20,7 @@ class Conversation:
         current_stage = self.user.get_conversation_stage()
         print(f"Handling conversation at stage: {current_stage}")
         
-        if current_stage == 'initial':
-            self.onboarding(self.user)
-        elif current_stage == 'awaiting_name':
+        if current_stage == 'initial' or 'awaiting_name':
             self.onboarding(self.user)
         elif current_stage == 'onboarded':
             self.welcome_back(self.user)

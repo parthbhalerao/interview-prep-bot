@@ -11,9 +11,6 @@ app = Flask(__name__)
 @app.route('/whatsapp', methods=['POST'])
 def whatsapp():
     try:
-        # Create a Bot instance to send/receive messages
-        # bot = Bot()
-
         # Extract the user's phone number from the request
         user_number = extract_number()
 
