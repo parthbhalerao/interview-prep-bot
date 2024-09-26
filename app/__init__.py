@@ -1,36 +1,47 @@
 from flask import Flask, request
-from utils.helper import User
-from model.messaging import Conversation
+from utils.user import User
+from bot import Bot
+from model.conversation import Conversation
+# from model.messaging import Conversation
 import json
 from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
 
-def load_messages_from_json():
-    """Load messages from a JSON file."""
-    with open('./app/data/messages.json') as f:
-        return json.load(f)
-
 @app.route('/whatsapp', methods=['POST'])
 def whatsapp():
     try:
-        conv = Conversation()
-        print("Conversation Created!")
-        user_number = conv.extract_number()
-        print(f'{user_number} sent a message')
+        # Create a Bot instance to send/receive messages
+        # bot = Bot()
+
+        # Extract the user's phone number from the request
+        user_number = extract_number()
+
+        # Create a User instance with the phone number
         user = User(user_number)
-        print(f'{user.phone_number} added to database.')
 
-        if user.user_exists():
-            replies = conv.handle_conversation(user)
-        else:
+        # If the user doesn't exist in the database, create a new user
+        if not user.user_exists():
             user.create_user()
-            replies = conv.handle_conversation(user)
 
-        return conv.send_replies(replies)
+        # Create a Conversation instance, passing in the Bot instance for messaging
+        conv = Conversation(user)
+
+        # Handle the conversation logic
+        conv.handle_conversation()
+
+        return "OK", 200
+
     except Exception as e:
         print(f"Error occurred: {e}")
         return str(e), 500
+
+
+def extract_number():
+    """Extracts the user's phone number from the incoming request."""
+    user_number = request.form.get('From')
+    user_number = user_number.split(':')[1]  # Remove the "whatsapp:" prefix
+    return user_number
 
 if __name__ == '__main__':
     app.run(debug=True, host='localhost', port=5001)

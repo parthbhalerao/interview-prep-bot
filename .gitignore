@@ -18,3 +18,7 @@ config.yaml
 
 # Ignore the MacOS filesystem
 .DS_Store
+
+# Ignore Notebooks
+*.ipynb
+notebooks/

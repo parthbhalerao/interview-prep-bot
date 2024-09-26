@@ -44,7 +44,6 @@ class User:
         conn = self._connect()
         cursor = conn.cursor()
 
-
         # Checking if the number exists
         cursor.execute("SELECT phone_number FROM users WHERE phone_number = ?", (self.phone_number,))
 
@@ -85,7 +84,9 @@ class User:
         if self.user_exists():
             conn = self._connect()
             cursor = conn.cursor()
-            cursor.execute("SELECT name FROM users WHERE phone_number = ?", (self.phone_number))            
+            cursor.execute("SELECT name FROM users WHERE phone_number = ?", (self.phone_number))
+        else:
+            return 'User'
 
     def update_user_name(self, user_name):
         """
@@ -116,6 +117,10 @@ class User:
             self.phone_number, self.name, self.conversation_stage = user_info  # Update the instance attributes
             return user_info
         return None
+    
+    def get_user_number(self) -> str:
+        user_number = self.phone_number
+        return user_number
 
     def get_conversation_stage(self):
         user_info = self.get_user_info()

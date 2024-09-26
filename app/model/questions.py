@@ -1,34 +1,28 @@
 import random
-from flask import Flask, request
-import requests
-from twilio.rest import Client
-from twilio.twiml.messaging_response import MessagingResponse
 import json
 
-# Reading the message templates
-with open('./data/messages.json', 'r') as f:
-    messages = json.load(f)
+class Question:
+    def __init__(self, question_fp: str = './data/questions.json'):
+        self.question_fp = question_fp
+        self.questions = self.load_questions()
 
-# Select a random question from the list of questions #
-def select_random_question(fp: str = './data/questions_college.txt'):
-    try: 
-        with open(fp, 'r') as f:
-            questions: list[str] = f.readlines()
+    # Load questions from the specified file
+    def load_questions(self) -> list[str]:
+        try:
+            with open(self.question_fp, 'r') as f:
+                questions = json.load(f)
 
-        questions = [question.strip() for question in questions]
+            return questions.get("questions", [])
+        except FileNotFoundError:
+            print('Question bank not found.')
+            return []
+        except Exception as e:
+            print(f'Error occurred while loading questions: {e}')
+            return []
 
-        rand_question: str = random.choice(questions)
-
-        return rand_question
-    
-    except FileNotFoundError:
-        return 'Question bank not found'
-    except Exception as e:
-        return f'Error occured while selecting random question {e}'
-
-# Onboarding messages #
-def onboarding_messages(msg):
-    onboarding_msgs: list = messages['onboarding']
-    message = onboarding_msgs['welcome']
-    msg.body(message)
-    return None
+    # Select a random question from the list
+    def select_random_question(self) -> str:
+        if self.questions:
+            return random.choice(self.questions)
+        else:
+            return 'No questions available.'
