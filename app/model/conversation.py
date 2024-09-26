@@ -20,15 +20,17 @@ class Conversation:
         current_stage = self.user.get_conversation_stage()
         print(f"Handling conversation at stage: {current_stage}")
         
-        if current_stage == 'initial' or 'awaiting_name':
+        if current_stage == 'initial':
+            self.onboarding(self.user)
+        elif current_stage == 'awaiting_name':
             self.onboarding(self.user)
         elif current_stage == 'onboarded':
             self.welcome_back(self.user)
-        elif current_stage == 'awaiting-purpose':
+        elif current_stage == 'awaiting_purpose':
             self.define_purpose(self.user)
-        elif current_stage == 'interview-preparation':
+        elif current_stage == 'interview_preparation':
             self.handle_interview(self.user)
-        elif current_stage == 'general-advice':
+        elif current_stage == 'general_advice':
             self.provide_general_advice(self.user)
         else:
             self.welcome_back(self.user)
@@ -75,7 +77,7 @@ class Conversation:
         self.bot.ask(to_number, options_message)
 
         # Update the user's conversation stage
-        user.set_conversation_stage('awaiting-purpose')
+        user.set_conversation_stage('awaiting_purpose')
 
     def define_purpose(self, user):
         """Determine the user's purpose based on their reply."""
@@ -89,7 +91,7 @@ class Conversation:
             purpose = 'general_advice'
             body = "You've selected General Advice. Please wait while we gather the necessary information."
         else:
-            purpose = 'awaiting-purpose'
+            purpose = 'awaiting_purpose'
             body = "Sorry, I couldn't understand your selection. Please reply with 1 for Interview Preparation or 2 for General Advice."
 
         # Send confirmation and set the conversation stage
