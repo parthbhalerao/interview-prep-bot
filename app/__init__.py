@@ -1,6 +1,6 @@
 from flask import Flask, request
 from utils.user import User
-from bot import Bot
+from model.bot import Bot
 from model.conversation import Conversation
 # from model.messaging import Conversation
 import json

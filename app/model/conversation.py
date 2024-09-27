@@ -1,5 +1,5 @@
 from flask import request
-from bot import Bot
+from model.bot import Bot
 from utils.user import User
 import json
 
@@ -31,7 +31,7 @@ class Conversation:
         elif current_stage == 'interview_preparation':
             self.handle_interview(self.user)
         elif current_stage == 'general_advice':
-            self.provide_general_advice(self.user)
+            self.which_general_advice(self.user)
         else:
             self.welcome_back(self.user)
 
@@ -121,6 +121,10 @@ class Conversation:
 
         self.bot.say(to_number, interview_message)
         # Further logic for interview preparation can be added here
+
+    def which_general_advice(self, user):
+        user.set_conversation_stage('confirm-general-advice')
+        pass
 
     def provide_general_advice(self, user):
         """Handle general advice logic."""

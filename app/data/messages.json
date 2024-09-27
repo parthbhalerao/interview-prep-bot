@@ -3,11 +3,11 @@
       "welcome": "Hi there! 🎓 I’m here to help you practice for your upcoming college interviews and boost your confidence. Here’s how I can help you prepare:\n\n🎤 *Simulate College Interviews:*\nI'll ask you a variety of real interview questions commonly used by admissions officers.\n\n💬 *Get Instant Feedback:*\nAfter each answer, I’ll provide you with personalized feedback to help improve your responses.\n\nOver time, I can help you refine your answers to make sure you're interview-ready!",
       "ask_name": "Before we jump in, what do I call you? Full name:",
       "confirm_name": "Nice to meet you, {name}!",
-      "options": "What would you like to do today?\n1. General Advice\n2. Interview Practice"
+      "options": "What would you like to do today?\n1. Interview Pratice\n2. General Advice"
     },
     "welcome_back": {
         "greeting": "*Welcome back, {name}!*",
-        "options": "What would you like to do today?\n1. General Advice\n2. Interview Practice\n3.Update your profile"
+        "options": "What would you like to do today?\n1. General Advice\n2. Interview Practice\n"
     },
     "feedback": {
       "request": "We’d love to hear your feedback. Please take a moment to share your experience.",
