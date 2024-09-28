@@ -1,0 +1,85 @@
+import os
+import json
+from openai import OpenAI
+
+class AIHandler:
+    def __init__(self) -> None:
+        ai_api_key: str = self.load_openai_api_key()
+        self.client = OpenAI(api_key=ai_api_key)
+        self.prompts = self.load_prompts()
+
+    def load_openai_api_key(self):
+        ai_api_key: str = os.getenv('OPENAI_API_KEY')
+        if not ai_api_key:
+            raise ValueError("OpenAI API key not found in environment variables.")
+        return ai_api_key
+
+    def load_prompts(self):
+        with open('./app/data/prompts.json', 'r') as f:
+            return json.load(f)
+
+    def generate_response(self, messages, model="gpt-4o-mini", max_tokens=200, temperature=0.7):
+        response = self.client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            n=1,
+        )
+        message = response.choices[0].message.content.strip()
+        return message
+
+    def generate_advice(self, category, user_input=None):
+        """
+        Generates advice based on the selected category.
+        """
+        # Get the appropriate prompt for the category
+        prompt_template = self.prompts["advice_prompts"].get(category, {}).get("prompt", "")
+
+        if not prompt_template:
+            raise ValueError(f'No prompt template found for category: {category}')
+        
+        # Modify the prompt to include formatting instructions
+        formatting_instructions = (
+            "\n\nPlease provide the advice in clear, concise bullet points suitable for a WhatsApp message. "
+            "Use simple formatting, with each bullet point starting with a dash (-) and on a new line. "
+            "Avoid using Markdown or HTML formatting. Make the advice engaging and easy to read. Can also add emojis that make it look more professional."
+            "The final message will be sent to the user and it should be displayed to just show the infomation rather you acknowledging these prompts"
+        )
+
+        # Construct the messages
+        prompt = prompt_template + formatting_instructions
+        messages = [{'role': 'system', 'content': prompt}]
+
+        # If user input is provided, add it to the messages
+        if user_input:
+            messages.append({'role': 'user', 'content': user_input})
+
+        # Generate the advice using the generate_response method
+        advice = self.generate_response(messages, model='gpt-4o-mini', max_tokens=200, temperature=0.7)
+        return advice
+
+    def generate_feedback(self, question, user_response):
+        # Get the feedback prompt template
+        feedback_prompt_template = self.prompts["feedback_prompts"]["feedback_prompt"]["prompt"]
+
+        # Construct the messages
+        messages = [
+            {'role': 'system', 'content': feedback_prompt_template},
+            {'role': 'user', 'content': f"Question: {question}\nUser Response: {user_response}"}
+        ]
+
+        # Generate the feedback
+        feedback = self.generate_response(messages, model='gpt-4o-mini', max_tokens=200, temperature=0.7)
+        return feedback
+
+    def handle_irrelevant_question(self):
+        # Get the irrelevant question prompt
+        irrelevant_prompt = self.prompts["irrelevant_question"]["prompt"]
+
+        # Construct the messages
+        messages = [{'role': 'system', 'content': irrelevant_prompt}]
+
+        # Generate the response
+        response = self.generate_response(messages, model='gpt-4o-mini', max_tokens=100, temperature=0.7)
+        return response

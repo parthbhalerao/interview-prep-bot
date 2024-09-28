@@ -1,97 +1,77 @@
 import sqlite3
 
 class User:
-    def __init__(self, phone_number : str, db_path : str = 'app/data/users.db'):
-        self.phone_number : str = phone_number
-        self.db_path : str = db_path
-        self.username : str = 'User'
-        self.conversation_stage : str = 'initial'
+    def __init__(self, phone_number: str, db_path: str = 'app/data/users.db'):
+        self.phone_number: str = phone_number
+        self.db_path: str = db_path
 
-        # Call the method to ensure the table exists
+        # Initialize user information
+        self.user_info = None  # This will be a dictionary containing user data
+
+        # Ensure the table exists
         self._create_users_db()
-        self.create_user()
 
-    
+        # Load user information or create a new user
+        self.user_info = self.get_user_info()
+        if not self.user_info:
+            self.create_user()
+            self.user_info = self.get_user_info()  # Fetch the user info after creation
+
     def _create_users_db(self):
+        # Same as before
         try:
-            # Connect to the SQLite database
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-
-            # Create the users table if it doesn't exist
             cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 phone_number TEXT UNIQUE NOT NULL,
                                 name TEXT,
-                                conversation_stage TEXT DEFAULT 'initial'
+                                conversation_stage TEXT DEFAULT 'initial',
+                                last_advice TEXT DEFAULT NULL
                             );''')
-
-            # Commit changes
             conn.commit()
-
         except sqlite3.Error as e:
             print(f"An error occurred: {e}")
         finally:
-            # Ensure the connection is closed
             conn.close()
 
     def _connect(self):
         conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row  # Access columns by name
         return conn
 
     def user_exists(self):
-        # Connecting to the SQLite database
-        conn = self._connect()
-        cursor = conn.cursor()
-
-        # Checking if the number exists
-        cursor.execute("SELECT phone_number FROM users WHERE phone_number = ?", (self.phone_number,))
-
-        # Fetch the result and close connection
-        result = cursor.fetchone()
-        conn.close()
-
-        # Return True if number exists, else False
-        return result is not None
+        # Use self.user_info to determine if the user exists
+        return self.user_info is not None
 
     def create_user(self):
-        """
-        Inserts the user into the database with their phone number and optional name.
-        """
-        if not self.user_exists():
-            conn = self._connect()
-            cursor = conn.cursor()
-            try:
-                cursor.execute("INSERT INTO users (phone_number , name, conversation_stage) VALUES (?, ?, ?)", (self.phone_number, self.username, self.conversation_stage))
-                conn.commit()
-                print(f"User {self.phone_number} added successfully.")
-            except sqlite3.IntegrityError:
-                print(f"User {self.phone_number} already exists.")
-            finally:
-                conn.close()
-        else:
-            print(f"User {self.phone_number} already exists in the system.")
-    
-    def update_conversation_stage(self, stage):
-        """Update the user's conversation stage in the database."""
         conn = self._connect()
         cursor = conn.cursor()
-        cursor.execute("UPDATE users SET conversation_stage = ? WHERE phone_number = ?", (stage, self.phone_number))
-        conn.commit()
+        try:
+            cursor.execute(
+                "INSERT INTO users (phone_number, name, conversation_stage) VALUES (?, ?, ?)",
+                (self.phone_number, 'User', 'initial')
+            )
+            conn.commit()
+            print(f"User {self.phone_number} added successfully.")
+        except sqlite3.IntegrityError:
+            print(f"User {self.phone_number} already exists.")
+        finally:
+            conn.close()
+
+    def get_user_info(self):
+        conn = self._connect()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE phone_number = ?", (self.phone_number,))
+        user_info = cursor.fetchone()
         conn.close()
 
-    def get_user_name(self):
-        if self.user_exists():
-            conn = self._connect()
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM users WHERE phone_number = ?", (self.phone_number))
+        if user_info:
+            return dict(user_info)
         else:
-            return 'User'
+            return None
 
     def update_user_name(self, user_name):
-        """
-        Updates the user's name in the database.
-        """
         if self.user_exists():
             conn = self._connect()
             cursor = conn.cursor()
@@ -99,57 +79,61 @@ class User:
             conn.commit()
             conn.close()
             print(f"User {self.phone_number}'s name updated to {user_name}.")
+            # Update self.user_info
+            self.user_info['name'] = user_name
         else:
             print(f"User {self.phone_number} does not exist.")
 
-    def get_user_info(self):
-        """Fetch the user's information including the conversation state."""
-        conn = self._connect()
-        cursor = conn.cursor()
+    def get_user_name(self):
+        if self.user_exists():
+            return self.user_info.get('name', 'User')
+        else:
+            return 'User'
 
-        cursor.execute("SELECT phone_number, name, conversation_stage FROM users WHERE phone_number = ?", (self.phone_number,))
-        user_info = cursor.fetchone()  # Fetch the user information
-
-        conn.close()
-
-        # Return the fetched user info or None if no data was found
-        if user_info:
-            self.phone_number, self.name, self.conversation_stage = user_info  # Update the instance attributes
-            return user_info
-        return None
-    
     def get_user_number(self) -> str:
-        user_number = self.phone_number
-        return user_number
+        return self.phone_number
 
     def get_conversation_stage(self):
-        user_info = self.get_user_info()
-        
-        if user_info and len(user_info) >= 3:
-            conversation_stage = user_info[2]  # The conversation_stage is the third element
-            return conversation_stage
+        self.user_info = self.get_user_info()  # Refresh the user info
+        if self.user_exists():
+            return self.user_info.get('conversation_stage', 'initial')
         else:
             print("Can't find conversation_stage")
-    
+            return 'initial'
+
+
     def set_conversation_stage(self, new_stage):
         if self.user_exists():
             conn = self._connect()
             cursor = conn.cursor()
-
-            # Update the conversation stage for the user
-            cursor.execute("UPDATE users SET conversation_stage = ? WHERE phone_number = ?", 
-                       (new_stage, self.phone_number))
+            cursor.execute(
+                "UPDATE users SET conversation_stage = ? WHERE phone_number = ?",
+                (new_stage, self.phone_number)
+            )
             conn.commit()
             conn.close()
-
-            # Update the local instance's stage
-            self.conversation_stage = new_stage
+            # Update self.user_info
+            self.user_info['conversation_stage'] = new_stage
         else:
             print(f"Can't change the conversation stage. User doesn't exist")
 
+    def set_last_advice(self, advice):
+        if self.user_exists():
+            conn = self._connect()
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE users SET last_advice = ? WHERE phone_number = ?",
+                (advice, self.phone_number)
+            )
+            conn.commit()
+            conn.close()
+            # Update self.user_info
+            self.user_info['last_advice'] = advice
+        else:
+            print(f"User {self.phone_number} does not exist.")
 
-
-
-
-
-
+    def get_last_advice(self):
+        if self.user_exists():
+            return self.user_info.get('last_advice', None)
+        else:
+            return None

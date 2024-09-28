@@ -6,9 +6,12 @@
       "options": "What would you like to do today?\n1. Interview Pratice\n2. General Advice"
     },
     "welcome_back": {
-        "greeting": "*Welcome back, {name}!*",
-        "options": "What would you like to do today?\n1. General Advice\n2. Interview Practice\n"
-    },
+      "greeting": "*👋 Welcome back, {name}!*",
+      "options": "*What would you like to do today?*\nPlease choose one of the options below by replying with the corresponding number:\n\n1️⃣ *Interview Practice*\n2️⃣ *General Advice*",
+      "select_category": "*What specific advice are you looking for?*\nPlease select one of the following options by replying with the corresponding number:\n\n1️⃣ *General Tips* \n2️⃣ *Pre-interview Preparation* \n3️⃣ *Behavioral Interview Tips* \n4️⃣ *Virtual/Phone Interview Advice* \n5️⃣ *Post-interview Tips*",
+      "confirm_category": "Awesome, you have selected {category}."
+  }
+  ,
     "feedback": {
       "request": "We’d love to hear your feedback. Please take a moment to share your experience.",
       "thank_you": "Thank you for providing feedback!"

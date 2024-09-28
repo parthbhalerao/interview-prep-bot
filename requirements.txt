@@ -10,3 +10,4 @@ html5lib
 python-dotenv
 twilio
 sqlite3
+openai
