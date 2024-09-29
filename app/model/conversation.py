@@ -5,6 +5,9 @@ from utils.user import User
 from utils.commands import CommandHandler
 import json
 import random
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Conversation:
     def __init__(self, user):
@@ -35,6 +38,12 @@ class Conversation:
     def handle_conversation(self):
         """Main method to handle conversation flow."""
         user_input = request.form.get('Body', '').strip()  # Read reply
+
+        # Getting the last interation
+        last_interaction = self.user.get_last_interaction()
+
+        # Update last interaction
+        self.user.update_last_interaction()
         
         command = self.command_handler.check_for_commands(user_input)
         if command:
@@ -96,6 +105,7 @@ class Conversation:
             ask_name_message = onboarding_msgs['ask_name']
             
             # Use the Bot class to send messages
+            print('Sending onboarding message to user: %s' % welcome_message)
             self.bot.say(to_number, welcome_message)
             self.bot.say(to_number, ask_name_message)
 
@@ -210,14 +220,34 @@ class Conversation:
     def ask_interview_question(self, user):
         to_number = user.get_user_number()
         interview_type = user.get_interview_type()
+        interview_role = user.get_interview_role()
         last_interview_question = user.get_last_interview_question()
 
         question = random.choice(self.interview_questions)
+        attempts = 0
+        max_attempts = 5
         
-        if question == last_interview_question:
-            question = 
+        while question == last_interview_question and attempts < max_attempts:
+            question = random.choice(self.interview_questions)
+            attempts += 1
 
-        if interview_type == 'college':
+        prompt = (
+            f"You are a professional interviewer conducting a {interview_type} interview for the role/college program of '{interview_role}'. "
+            f"Please rephrase or adapt the following question to make it more relevant and specific to this context:\n\n"
+            f"Original Question: {question}\n\n"
+            f"Adapted Question:"
+            f"Make sure the length of the adapted question isn't long"
+            f"Only reply with the adapted question and nothing else."
+        )
+
+        try:
+            adapted_question = self.ai.generate_response(
+                messages=[{'role' : 'system', 'content' : prompt}]
+            )
+        except Exception as e:
+            print(f"Error generating adapted question: {e}")
+            self.bot.say(to_number, "Sorry, I'm having trouble generating a question right now.")
+            return
 
         user.set_last_interview_question(question)
 

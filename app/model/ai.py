@@ -1,6 +1,9 @@
 import os
 import json
 from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv() #Loading the environment variables
 
 class AIHandler:
     def __init__(self) -> None:
@@ -46,7 +49,7 @@ class AIHandler:
             "2.2 Format your output in bullet points and headings."
             "3. Use whatsapp formatting to ensure the advice looks professional and easy to read." 
             "4. Give advice in sections." 
-            "5. The advice should be concise and less than 200 words."
+            "5. The advice should be concise and less than 200 words. or 15 lines of content"
             "6. Avoid using Markdown or HTML formatting. Make the advice engaging and easy to read. Can also add emojis that make it look more professional."
             "7. The final message will be sent to the user and it should be displayed to just show the infomation rather you acknowledging these prompts"
         )

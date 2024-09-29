@@ -1,6 +1,9 @@
 import os
 from twilio.rest import Client
 from flask import request
+from dotenv import load_dotenv
+
+load_dotenv() # Loading the environment
 
 class Bot:
     def __init__(self):

@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 
 class User:
     def __init__(self, phone_number: str, db_path: str = 'app/data/users.db'):
@@ -22,16 +23,17 @@ class User:
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-            # Create table with new columns
             cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 phone_number TEXT UNIQUE NOT NULL,
                                 name TEXT,
                                 conversation_stage TEXT DEFAULT 'initial',
                                 last_advice TEXT DEFAULT NULL,
+                                last_interaction TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 interview_type TEXT DEFAULT NULL,
                                 interview_role TEXT DEFAULT NULL,
                                 last_interview_question TEXT DEFAULT NULL,
+                                last_adapted_question TEXT DEFAULT NULL,
                                 interview_response TEXT DEFAULT NULL,
                                 last_follow_up_question TEXT DEFAULT NULL,
                                 follow_up_response TEXT DEFAULT NULL
@@ -51,7 +53,8 @@ class User:
             ('last_interview_question', 'TEXT', 'NULL'),
             ('interview_response', 'TEXT', 'NULL'),
             ('last_follow_up_question', 'TEXT', 'NULL'),
-            ('follow_up_response', 'TEXT', 'NULL')
+            ('follow_up_response', 'TEXT', 'NULL'),
+            ('last_interaction', 'TIMESTAMP', 'CURRENT_TIMESTAMP')
         ]
         for column_name, data_type, default_value in columns:
             try:
@@ -124,14 +127,34 @@ class User:
     def get_user_number(self) -> str:
         return self.phone_number
 
-    def get_conversation_stage(self):
-        self.user_info = self.get_user_info()  # Refresh the user info
+    def update_last_interaction(self):
         if self.user_exists():
-            return self.user_info.get('conversation_stage', 'initial')
+            current_time = datetime.datetime.utcnow()
+            conn = self._connect()
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE users SET last_interaction = ? WHERE phone_number = ?",
+                (current_time, self.phone_number)
+            )
+            conn.commit()
+            conn.close()
+            self.user_info['last_interaction'] = current_time
         else:
-            print("Can't find conversation_stage")
-            return 'initial'
+            print(f"User {self.phone_number} does not exist.")
 
+    def get_last_interaction(self):
+        self.user_info = self.get_user_info()  # Refresh user info
+        if self.user_exists():
+            return self.user_info.get('last_interaction')
+        else:
+            return None
+
+    def get_conversation_stage(self):
+        self.user_info = self.get_user_info() # Refresh user info
+        if self.user_exists():
+            return self.user_info.get('conversation_stage')
+        else:
+            return None
 
     def set_conversation_stage(self, new_stage):
         if self.user_exists():
