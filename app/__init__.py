@@ -1,10 +1,6 @@
 from flask import Flask, request
 from utils.user import User
-from model.bot import Bot
 from model.conversation import Conversation
-# from model.messaging import Conversation
-import json
-from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
 
@@ -20,12 +16,14 @@ def whatsapp():
         # If the user doesn't exist in the database, create a new user
         if not user.user_exists():
             user.create_user()
+            print('New User created')
 
         # Create a Conversation instance, passing in the Bot instance for messaging
         conv = Conversation(user)
 
         # Handle the conversation logic
         conv.handle_conversation()
+        print('Handling conversation')
 
         return "OK", 200
 

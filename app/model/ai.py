@@ -61,7 +61,7 @@ class AIHandler:
 
     def generate_feedback(self, question, user_response):
         # Get the feedback prompt template
-        feedback_prompt_template = self.prompts["feedback_prompts"]["feedback_prompt"]["prompt"]
+        feedback_prompt_template = self.prompts["interview_prompts"]["feedback_prompt"]["prompt"]
 
         # Construct the messages
         messages = [
@@ -72,6 +72,36 @@ class AIHandler:
         # Generate the feedback
         feedback = self.generate_response(messages, model='gpt-4o-mini', max_tokens=200, temperature=0.7)
         return feedback
+
+    def generate_follow_up_question(self, user_response, interview_type, role):
+        prompt_template = self.prompts['interview_prompts']['follow_up_prompt']['prompt']
+        prompt = prompt_template.format(
+            user_response = user_response,
+            interview_type = interview_type,
+            role = role    
+        )
+        
+        messages = [{'role': 'system', 'content': prompt}]
+        follow_up_question = self.generate_response(messages)
+        
+        return follow_up_question
+
+    def generate_interview_feedback(self, question, user_response, follow_up_question, follow_up_response, interview_type, role):
+        prompt_template = self.prompts['interview_prompts']['feedback_prompt']['prompt']
+        prompt = prompt_template.format(
+            question = question,
+            user_response = user_response,
+            follow_up_question = follow_up_question,
+            follow_up_response = follow_up_response,
+            interview_type = interview_type,
+            role = role
+        )
+
+        messages = [{'role':'system', 'content': prompt}]
+        feedback = self.generate_response(messages)
+
+        return feedback
+        
 
     def handle_irrelevant_question(self):
         # Get the irrelevant question prompt

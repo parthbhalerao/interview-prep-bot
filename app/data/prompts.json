@@ -1,4 +1,12 @@
-{
+{   "interview_prompts": {
+        "follow_up_prompt": {
+            "prompt": "As an interviewer for a {interview_type}, generate a relevant follow-up question based on the candidate's response to the {role} position: \"{user_response}\""
+        },
+        "feedback_prompt": {
+            "prompt" : "As an experienced interviewer for a {interview_type}, provide detailed feedback on the following candidate's responses for the {role} position.\n\nMain Question: {question}\nCandidate's Answer: {user_response}\n\nFollow-up Question: {follow_up_question}\nCandidate's Answer: {follow_up_response}\n\nHighlight the strengths and areas for improvement."
+        }
+
+    },
     "advice_prompts": {
         "general_tips": {
             "prompt": "You are an expert interview coach specializing in helping students with their general interview preparation. Please provide detailed, practical advice on the topic, written in bullet points and formatted clearly for WhatsApp. Ensure the advice is maximally useful, covers key aspects of general preparation, and stays strictly within the interview context. Output the result in bullet points, keeping it short and impactful.",

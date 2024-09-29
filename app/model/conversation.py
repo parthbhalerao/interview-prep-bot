@@ -7,6 +7,7 @@ import json
 class Conversation:
     def __init__(self, user):
         self.messages = self.load_messages()
+        self.interview_questions = self.load_interview_questions()
         self.bot = Bot()
         self.user = user
         self.ai = AIHandler()
@@ -15,19 +16,45 @@ class Conversation:
     def load_messages():
         """Load messages from JSON."""
         with open('./app/data/messages.json') as f:
-            return json.load(f)
+            data = json.load(f)
+            return data  # Return the entire messages dictionary
+
+
+    @staticmethod
+    def load_interview_questions():
+        with open('./app/data/questions.json') as f:
+            data = json.load(f)
+            # Extract the list of questions
+            interview_questions = [item['question'] for item in data['behavioral_questions']]
+            return interview_questions
+
 
     def handle_conversation(self):
         """Main method to handle conversation flow."""
         current_stage = self.user.get_conversation_stage()
         print(f"Handling conversation at stage: {current_stage}")
         
+        # Initiating the conversation
         if current_stage in ['initial', 'awaiting_name']:
             self.onboarding(self.user)
         elif current_stage == 'onboarded':
             self.welcome_back(self.user)
         elif current_stage == 'awaiting_purpose':
             self.define_purpose(self.user)
+
+        # Handle Interview Sessions
+        elif current_stage == 'awaiting_interview_type':
+            self.get_interview_type(self.user)
+        elif current_stage == 'awaiting_interview_role':
+            self.get_interview_role(self.user)
+        elif current_stage == 'awaiting_interview_question_response':
+            self.capture_interview_response(self.user)
+        elif current_stage == 'awaiting_follow_up_response':
+            self.capture_follow_up_response(self.user)
+        elif current_stage == 'awaiting_more_interview':
+            self.handle_more_interview(self.user)
+
+        # Handle General Advice Sessions
         elif current_stage == 'awaiting_advice_category':
             self.define_advice_category(self.user)
         elif current_stage == 'awaiting_advice_followup':
@@ -36,8 +63,8 @@ class Conversation:
             self.handle_more_advice_followup(self.user)
         elif current_stage == 'awaiting_more_advice':
             self.handle_more_advice(self.user)
-        elif current_stage == 'awaiting_interview_input':
-            self.handle_interview(self.user)
+
+        # Handle unkown sessions    
         else:
             # Reset to onboarded stage in case of an unknown stage
             self.user.set_conversation_stage('onboarded')
@@ -52,6 +79,7 @@ class Conversation:
         onboarding_msgs = self.messages['onboarding']
 
         if current_stage == 'initial':
+            print('Starting onboarding')
             welcome_message = onboarding_msgs['welcome']
             ask_name_message = onboarding_msgs['ask_name']
             
@@ -70,10 +98,29 @@ class Conversation:
 
             confirm_name_message = onboarding_msgs['confirm_name'].format(name=user_name)
             self.bot.say(to_number, confirm_name_message)
+            print('Finished onboarding %s' % user_name)
 
             # Updates the user's conversation_stage
             user.set_conversation_stage('onboarded')
             self.ask_purpose(self.user)
+
+    def welcome_back(self, user):
+        """Handle the welcome back sequence for returning users."""
+        to_number = user.get_user_number()
+        welcome_back_msgs = self.messages['welcome_back']
+
+        user_info = user.get_user_info()
+        if not user_info:
+            self.bot.say(to_number, "We couldn't find your information. Please start by saying 'Hello'.")
+            return
+
+        user_name = user.get_user_name()
+        greeting_message = welcome_back_msgs['greeting'].format(name=user_name)
+
+        self.bot.say(to_number, greeting_message)
+        # Update conversation stage to 'onboarded'
+        user.set_conversation_stage('onboarded')
+        self.ask_purpose(user)    
 
     def ask_purpose(self, user):
         """Ask user for their purpose (e.g., interview preparation, general advice)."""
@@ -93,8 +140,8 @@ class Conversation:
         reply = request.form.get('Body', '').strip().lower()
 
         if reply in ['1', 'interview preparation', 'interview practice']:
-            user.set_conversation_stage('awaiting_interview_input')
-            self.start_interview(user)
+            user.set_conversation_stage('awaiting_interview_type')
+            self.ask_interview_type(user)
         elif reply in ['2', 'general advice']:
             user.set_conversation_stage('awaiting_advice_category')
             self.ask_advice_category(user)
@@ -103,23 +150,111 @@ class Conversation:
             self.bot.say(to_number, body)
             # Remain in the same stage
 
-    def welcome_back(self, user):
-        """Handle the welcome back sequence for returning users."""
+    #################################
+    # Interview Preparation Methods # 
+    #################################
+    def ask_interview_type(self, user):
         to_number = user.get_user_number()
-        welcome_back_msgs = self.messages['welcome_back']
+        message = "Are you preparing for a college interview or a job interview? Please reply with 'college' or 'job'."
+        self.bot.say(to_number, message)
+        user.set_conversation_stage('awaiting_interview_type')
 
-        user_info = user.get_user_info()
-        if not user_info:
-            self.bot.say(to_number, "We couldn't find your information. Please start by saying 'Hello'.")
-            return
+    def get_interview_type(self, user):
+        to_number = user.get_user_number()
+        interview_type = request.form.get('Body', '').strip().lower()
 
-        user_name = user_info[1] if user_info[1] else 'User'
-        greeting_message = welcome_back_msgs['greeting'].format(name=user_name)
+        if interview_type in ['college', 'job']:
+            user.set_interview_type(interview_type)
 
-        self.bot.say(to_number, greeting_message)
-        # Update conversation stage to 'onboarded'
-        user.set_conversation_stage('onboarded')
-        self.ask_purpose(user)
+            self.ask_interview_role(user)
+
+    def ask_interview_role(self, user):
+        to_number = user.get_user_number()
+        interview_type = user.get_interview_type()
+
+        if interview_type == 'college':
+            message = "Please specify the college or program you're applying to so I can tailor the interview questions accordingly."
+        else:  # 'job'
+            message = "Please specify the job role you're applying for so I can tailor the interview questions accordingly."
+        self.bot.say(to_number, message)
+        user.set_conversation_stage('awaiting_interview_role')
+
+
+    def get_interview_role(self, user):
+        to_number = user.get_user_number()
+        role = request.form.get('Body', '').strip()
+        user.set_interview_role(role)
+        self.bot.say(to_number, f"Great! Let's start the interview for a {role} position.")
+        self.ask_interview_question(user)
+
+    def ask_interview_question(self, user):
+        to_number = user.get_user_number()
+        import random
+        question = random.choice(self.interview_questions)
+        user.set_last_interview_question(question)
+
+        # Ask the question
+        self.bot.say(to_number, question)
+        user.set_conversation_stage('awaiting_interview_question_response')
+
+    def capture_interview_response(self, user):
+        user_reponse = request.form.get('Body', '').strip()
+        user.set_interview_response(user_reponse)
+
+        # Generate a follow up
+        self.generate_follow_up_question(user)
+
+    def generate_follow_up_question(self, user):
+        user_response = user.get_last_interview_response()
+        interview_type = user.get_interview_type()
+        role = user.get_interview_role()
+
+        follow_up_question = self.ai.generate_follow_up_question(user_response, interview_type, role)
+        user.set_last_follow_up_question(follow_up_question)
+        
+        to_number = user.get_user_number()
+        self.bot.say(to_number, follow_up_question)
+        
+        user.set_conversation_stage('awaiting_follow_up_response')
+
+    def capture_follow_up_response(self, user):
+        to_number = user.get_user_number()
+        follow_up_response = request.form.get('Body', '').strip()
+        
+        user.set_follow_up_response(follow_up_response)
+
+        self.provide_feedback(user)
+
+    def provide_feedback(self, user):
+        to_number = user.get_user_number()
+        question = user.get_last_interview_question()
+        user_response = user.get_last_interview_response()
+        follow_up_question = user.get_last_follow_up_question()
+        follow_up_response = user.get_last_follow_up_response()
+        interview_type = user.get_interview_type()
+        role = user.get_interview_role()
+        print(f'Successfully got background for feedback')
+        
+        feedback = self.ai.generate_interview_feedback(question,user_response, follow_up_question, follow_up_response, interview_type, role)
+
+        self.bot.say(to_number, feedback)
+
+        self.bot.say(to_number, "Would you like to practice another question? Reply 'yes' or 'no'.")
+        user.set_conversation_stage('awaiting_more_interview')
+
+    def handle_more_interview(self, user):
+        to_number = user.get_user_number()
+        reply = request.form.get('Body', '').strip().lower()
+
+        if reply in ['yes', 'y']:
+            self.ask_interview_question(user)
+        elif reply in ['no', 'n']:
+            self.bot.say(to_number, "Thank you for practicing. Start another conversation by sending another message.")
+            user.set_conversation_stage('onboarded')
+        else:
+            error_message = "Sorry, I didn't understand that. Please reply with 'yes' or 'no'."
+            self.bot.say(to_number, error_message)
+            # Remain in the same stage
 
     def start_interview(self, user):
         """Initiate interview preparation."""
@@ -138,6 +273,9 @@ class Conversation:
         user.set_conversation_stage('onboarded')
         self.ask_purpose(user)
 
+    ##########################
+    # General Advice Methods #
+    ##########################
     def ask_advice_category(self, user):
         to_number = user.get_user_number()
         welcome_back_msgs = self.messages['welcome_back']
