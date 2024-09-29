@@ -18,7 +18,7 @@ class AIHandler:
         with open('./app/data/prompts.json', 'r') as f:
             return json.load(f)
 
-    def generate_response(self, messages, model="gpt-4o-mini", max_tokens=200, temperature=0.7):
+    def generate_response(self, messages, model="gpt-4o-mini", max_tokens=230, temperature=0.7):
         response = self.client.chat.completions.create(
             model=model,
             messages=messages,
@@ -26,8 +26,8 @@ class AIHandler:
             temperature=temperature,
             n=1,
         )
-        message = response.choices[0].message.content.strip()
-        return message
+        raw_message = response.choices[0].message.content.strip()
+        return raw_message
 
     def generate_advice(self, category, user_input=None):
         """
@@ -41,10 +41,14 @@ class AIHandler:
         
         # Modify the prompt to include formatting instructions
         formatting_instructions = (
-            "\n\nPlease provide the advice in clear, concise bullet points suitable for a WhatsApp message. "
-            "Use simple formatting, with each bullet point starting with a dash (-) and on a new line. "
-            "Avoid using Markdown or HTML formatting. Make the advice engaging and easy to read. Can also add emojis that make it look more professional."
-            "The final message will be sent to the user and it should be displayed to just show the infomation rather you acknowledging these prompts"
+            "1. Please provide the advice in clear, concise bullet points suitable for a WhatsApp message. "
+            "2.1 Please use emojis to give advice better in this case, either by using it in bullets or heading."
+            "2.2 Format your output in bullet points and headings."
+            "3. Use whatsapp formatting to ensure the advice looks professional and easy to read." 
+            "4. Give advice in sections." 
+            "5. The advice should be concise and less than 200 words."
+            "6. Avoid using Markdown or HTML formatting. Make the advice engaging and easy to read. Can also add emojis that make it look more professional."
+            "7. The final message will be sent to the user and it should be displayed to just show the infomation rather you acknowledging these prompts"
         )
 
         # Construct the messages
@@ -62,15 +66,28 @@ class AIHandler:
     def generate_feedback(self, question, user_response):
         # Get the feedback prompt template
         feedback_prompt_template = self.prompts["interview_prompts"]["feedback_prompt"]["prompt"]
+        # Modify the prompt to include formatting instructions
+        formatting_instructions = (
+            "1. Please provide the advice in clear, concise bullet points suitable for a WhatsApp message. "
+            "2.1 Please use emojis to give advice better in this case, either by using it in bullets or heading."
+            "2.2 Format your output in bullet points and headings."
+            "3. Use whatsapp formatting to ensure the advice looks professional and easy to read." 
+            "4. Give advice in sections." 
+            "5. The advice should be concise and less than 200 words."
+            "6. Avoid using Markdown or HTML formatting. Make the advice engaging and easy to read. Can also add emojis that make it look more professional."
+            "7. The final message will be sent to the user and it should be displayed to just show the infomation rather you acknowledging these prompts"
+        )
+
+        feedback_prompt = feedback_prompt_template + formatting_instructions
 
         # Construct the messages
         messages = [
-            {'role': 'system', 'content': feedback_prompt_template},
+            {'role': 'system', 'content': feedback_prompt},
             {'role': 'user', 'content': f"Question: {question}\nUser Response: {user_response}"}
         ]
 
         # Generate the feedback
-        feedback = self.generate_response(messages, model='gpt-4o-mini', max_tokens=200, temperature=0.7)
+        feedback = self.generate_response(messages, model='gpt-4o-mini', max_tokens=500, temperature=0.7)
         return feedback
 
     def generate_follow_up_question(self, user_response, interview_type, role):

@@ -2,7 +2,9 @@ from flask import request
 from model.bot import Bot
 from model.ai import AIHandler
 from utils.user import User
+from utils.commands import CommandHandler
 import json
+import random
 
 class Conversation:
     def __init__(self, user):
@@ -11,6 +13,7 @@ class Conversation:
         self.bot = Bot()
         self.user = user
         self.ai = AIHandler()
+        self.command_handler = CommandHandler(self.bot, self.user)
 
     @staticmethod
     def load_messages():
@@ -31,44 +34,53 @@ class Conversation:
 
     def handle_conversation(self):
         """Main method to handle conversation flow."""
-        current_stage = self.user.get_conversation_stage()
-        print(f"Handling conversation at stage: {current_stage}")
+        user_input = request.form.get('Body', '').strip()  # Read reply
         
-        # Initiating the conversation
-        if current_stage in ['initial', 'awaiting_name']:
-            self.onboarding(self.user)
-        elif current_stage == 'onboarded':
-            self.welcome_back(self.user)
-        elif current_stage == 'awaiting_purpose':
-            self.define_purpose(self.user)
-
-        # Handle Interview Sessions
-        elif current_stage == 'awaiting_interview_type':
-            self.get_interview_type(self.user)
-        elif current_stage == 'awaiting_interview_role':
-            self.get_interview_role(self.user)
-        elif current_stage == 'awaiting_interview_question_response':
-            self.capture_interview_response(self.user)
-        elif current_stage == 'awaiting_follow_up_response':
-            self.capture_follow_up_response(self.user)
-        elif current_stage == 'awaiting_more_interview':
-            self.handle_more_interview(self.user)
-
-        # Handle General Advice Sessions
-        elif current_stage == 'awaiting_advice_category':
-            self.define_advice_category(self.user)
-        elif current_stage == 'awaiting_advice_followup':
-            self.handle_advice_followup(self.user)
-        elif current_stage == 'awaiting_more_advice_followup':
-            self.handle_more_advice_followup(self.user)
-        elif current_stage == 'awaiting_more_advice':
-            self.handle_more_advice(self.user)
-
-        # Handle unkown sessions    
+        command = self.command_handler.check_for_commands(user_input)
+        if command:
+            print(f'Command: {command} detected in reply. Handling it.')
+            self.command_handler.handle_command(command)
+            return  # Exit after handling the command
+        
         else:
-            # Reset to onboarded stage in case of an unknown stage
-            self.user.set_conversation_stage('onboarded')
-            self.welcome_back(self.user)
+            current_stage = self.user.get_conversation_stage()
+            print(f"Handling conversation at stage: {current_stage}")
+            
+            # Initiating the conversation
+            if current_stage in ['initial', 'awaiting_name']:
+                self.onboarding(self.user)
+            elif current_stage == 'onboarded':
+                self.welcome_back(self.user)
+            elif current_stage == 'awaiting_purpose':
+                self.define_purpose(self.user)
+
+            # Handle Interview Sessions
+            elif current_stage == 'awaiting_interview_type':
+                self.get_interview_type(self.user)
+            elif current_stage == 'awaiting_interview_role':
+                self.get_interview_role(self.user)
+            elif current_stage == 'awaiting_interview_question_response':
+                self.capture_interview_response(self.user)
+            elif current_stage == 'awaiting_follow_up_response':
+                self.capture_follow_up_response(self.user)
+            elif current_stage == 'awaiting_more_interview':
+                self.handle_more_interview(self.user)
+
+            # Handle General Advice Sessions
+            elif current_stage == 'awaiting_advice_category':
+                self.define_advice_category(self.user)
+            elif current_stage == 'awaiting_advice_followup':
+                self.handle_advice_followup(self.user)
+            elif current_stage == 'awaiting_more_advice_followup':
+                self.handle_more_advice_followup(self.user)
+            elif current_stage == 'awaiting_more_advice':
+                self.handle_more_advice(self.user)
+
+            # Handle unkown sessions    
+            else:
+                # Reset to onboarded stage in case of an unknown stage
+                self.user.set_conversation_stage('onboarded')
+                self.welcome_back(self.user)
 
 
     def onboarding(self, user):
@@ -160,7 +172,6 @@ class Conversation:
         user.set_conversation_stage('awaiting_interview_type')
 
     def get_interview_type(self, user):
-        to_number = user.get_user_number()
         interview_type = request.form.get('Body', '').strip().lower()
 
         if interview_type in ['college', 'job']:
@@ -182,15 +193,32 @@ class Conversation:
 
     def get_interview_role(self, user):
         to_number = user.get_user_number()
-        role = request.form.get('Body', '').strip()
+
+        role = request.form.get('Body', '').strip().upper()
         user.set_interview_role(role)
-        self.bot.say(to_number, f"Great! Let's start the interview for a {role} position.")
+
+        interview_type = user.get_interview_type()
+        if interview_type == 'college':
+            message = f"Great! Let's start the interview for {role}."
+
+        else: # job
+            message = f"Great! Let's start the interview for a {role} position."
+            
+        self.bot.say(to_number, message)
         self.ask_interview_question(user)
 
     def ask_interview_question(self, user):
         to_number = user.get_user_number()
-        import random
+        interview_type = user.get_interview_type()
+        last_interview_question = user.get_last_interview_question()
+
         question = random.choice(self.interview_questions)
+        
+        if question == last_interview_question:
+            question = 
+
+        if interview_type == 'college':
+
         user.set_last_interview_question(question)
 
         # Ask the question

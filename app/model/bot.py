@@ -1,5 +1,6 @@
 import os
 from twilio.rest import Client
+from flask import request
 
 class Bot:
     def __init__(self):
@@ -25,6 +26,9 @@ class Bot:
             body=message_body
         )
         print(f"Message sent to {to_number} with SID: {message.sid}")
+
+    def read():
+        return request.form.get('Body', '').strip()
 
     def ask(self, to_number : str, question : str):
         """Send a question to the user."""
