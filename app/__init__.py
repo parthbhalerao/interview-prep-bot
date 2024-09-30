@@ -5,7 +5,7 @@ from model.conversation import Conversation
 app = Flask(__name__) # Initialize Flask application
 
 @app.route('/whatsapp', methods=['POST'])
-def whatsapp():
+def whatsapp_webhook():
     try:
         # Extract the user's phone number from the request
         user_number = extract_number()
@@ -37,6 +37,3 @@ def extract_number():
     user_number = request.form.get('From')
     user_number = user_number.split(':')[1]  # Remove the "whatsapp:" prefix
     return user_number
-
-if __name__ == '__main__':
-    app.run(debug=True, host='localhost', port=5001)
