@@ -1,6 +1,6 @@
 from flask import Flask, request
-from utils.user import User
-from model.conversation import Conversation
+from .utils.user import User
+from .model.conversation import Conversation
 
 app = Flask(__name__) # Initialize Flask application
 

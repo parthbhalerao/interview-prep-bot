@@ -1,8 +1,7 @@
 from flask import request
-from model.bot import Bot
-from model.ai import AIHandler
-from utils.user import User
-from utils.commands import CommandHandler
+from .bot import Bot
+from .ai import AIHandler
+from app.utils.commands import CommandHandler
 import json
 import random
 from dotenv import load_dotenv
